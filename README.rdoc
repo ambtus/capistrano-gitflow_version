@@ -1,38 +1,37 @@
-= gitflow: a Capistrano recipe for git deployment using tags in a multistage environment.
+= gitflow_version: a Capistrano recipe for git deployment using tags in a multistage environment using MAJOR.MINOR.REVISION.BUILD
 
 The best thing about this recipe is that there is almost nothing to learn -- your cap deploy process barely changes.
-Gitflow simply adds some tagging/logging/workflow magic.
+Gitflow simply adds some tagging/logging/workflow magic to the multistage recipe.
 
     # BEFORE
-    $ cap deploy              # 'master' goes to staging
-    $ cap production deploy   # 'master' goes to production
+    $ cap deploy              # 'deploy' goes to staging
+    $ cap production deploy   # 'deploy' goes to production
 
     # AFTER
-    $ cap deploy                                                          
-    # 'master' goes to staging; tag staging-YYYY-MM-DD.X created
+    $ cap deploy
+    # 'deploy' goes to staging; tagged test-MAJOR.MINOR.REVISION.BUILD
     $ cap production deploy
     # deploys latest staging tag, or if last tag is a production tag then that, to production
-    # for specifying the tag by hand add `-s tag=staging-YYYY-MM-DD-X-user-description`
-    # tag 'staging-YYYY-MM-DD-X' goes to production
-    # tag 'production-YYYY-MM-DD-X' created; points to staging-YYYY-MM-DD-X
+    # for specifying the tag by hand add `-s tag=MAJOR.MINOR.REVISION.BUILD`
+    # tag 'test-MAJOR.MINOR.REVISION.BUILD' goes to production
+    # tag 'MAJOR.MINOR.REVISION.BUILD' created; points to test-MAJOR.MINOR.REVISION.BUILD
 
     # BONUS
-    cap gitflow:commit_log              
+    cap gitflow_version:commit_log
     # displays a commit log pushed to staging
     # ... alternatively, if you're using GitHub, will open a page using branch compare
-    cap production gitflow:log_log   
+    cap production gitflow_version:log_log
     # displays a commit log of what will be pushed to production
 
 == INSTALLATION
 
 First, install the gem:
 
-    gem install capistrano-gitflow
+    gem install capistrano-gitflow_version
 
 Then update config/deploy.rb
 
-    require 'capistrano/ext/multistage'
-    require 'capistrano/gitflow' # needs to come after multistage
+    require 'capistrano/gitflow_version'
 
 == DETAILS
 
@@ -49,7 +48,9 @@ Whenever you want to push the currently checked-out code to staging, just do:
 
 gitflow will automatically:
 
-* create a unique tag in the format of 'staging-YYYY-MM-DD.X'
+* if the last tag was a test-MAJOR.MINOR.REVISION.BUILD will automatically increment BUILD
+* if the last tag was MAJOR.MINOR.REVISION.BUILD will ask you if you are bumping MAJOR, MINOR, or REVISION
+* create a new tag
 * configure multistage to use that tag for the deploy
 * push the code and tags to the remote "origin"
 * and run the normal deploy task for the staging stage.
@@ -58,11 +59,11 @@ gitflow will automatically:
 
 Whenever you want to push code to production, you must specify the staging tag you wish to promote to production:
 
-    cap production deploy -s tag=staging-2009-09-08.2
+    cap production deploy -s tag=test-0.8.4.3
 
 gitflow will automatically:
 
-* alias the staging tag to a production tag like: production-2008-09-08.2
+* alias the staging tag to a production tag without the test- prefix
 * configure multistage to use that tag for the deploy
 * push the code and tags to the remote "origin"
 * and run the normal deploy task for the production stage.
@@ -75,3 +76,7 @@ gitflow will automatically:
 == CREDIT
 
 Originally forked from Alan Pinstein's git_deployment repo. Gemified and hacked by Josh Nichols. There wasn't really a license originally, so...
+
+Forked from Josh Nichols's capistrano-gitflow repo. Hacked by Alice Brown. Put under the MIT License. See the LICENSE file.
+
+

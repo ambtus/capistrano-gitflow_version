@@ -1,15 +1,16 @@
 require 'capistrano'
-require 'capistrano/gitflow/natcmp'
+require 'capistrano/ext/multistage'
+require 'capistrano-gitflow_version/natcmp'
 require 'stringex'
 
 module Capistrano
-  class Gitflow
+  module GitflowVersion
     def self.load_into(capistrano_configuration)
       capistrano_configuration.load do
-        before "deploy:update_code", "gitflow:calculate_tag"
-        before "gitflow:calculate_tag", "gitflow:verify_up_to_date"
+        before "deploy:update_code", "gitflow_version:calculate_tag"
+        before "gitflow_version:calculate_tag", "gitflow_version:verify_up_to_date"
 
-        namespace :gitflow do
+        namespace :gitflow_version do
           def last_tag_matching(pattern)
             matching_tags = `git tag -l '#{pattern}'`.split
             matching_tags.sort! do |a,b|
@@ -96,7 +97,7 @@ Please make sure you have pulled and pushed all code before deploying:
 
             # no idea how to properly test for an optional cap argument a la '-s tag=x'
             to_tag = capistrano_configuration[:tag]
-            to_tag ||= begin 
+            to_tag ||= begin
                          puts "Calculating 'end' tag for :commit_log for '#{stage}'"
                          to_tag = if stage == :production
                                     last_staging_tag
@@ -171,7 +172,7 @@ Please make sure you have pulled and pushed all code before deploying:
         namespace :deploy do
           namespace :pending do
             task :compare do
-              gitflow.commit_log
+              gitflow_version.commit_log
             end
           end
         end
@@ -183,5 +184,5 @@ Please make sure you have pulled and pushed all code before deploying:
 end
 
 if Capistrano::Configuration.instance
-  Capistrano::Gitflow.load_into(Capistrano::Configuration.instance)
+  Capistrano::GitflowVersion.load_into(Capistrano::Configuration.instance)
 end
