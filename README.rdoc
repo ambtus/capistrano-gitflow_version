@@ -14,7 +14,7 @@ Gitflow simply adds some tagging/logging/workflow magic to the multistage recipe
     # deploys latest staging tag, or if last tag is a production tag then that, to production
     # for specifying the tag by hand add `-s tag=MAJOR.MINOR.REVISION.BUILD`
     # tag 'test-MAJOR.MINOR.REVISION.BUILD' goes to production
-    # tag 'MAJOR.MINOR.REVISION.BUILD' created; points to test-MAJOR.MINOR.REVISION.BUILD
+    # tag 'vMAJOR.MINOR.REVISION.BUILD' created; points to test-MAJOR.MINOR.REVISION.BUILD
 
     # BONUS
     cap gitflow_version:commit_log
@@ -49,7 +49,7 @@ Whenever you want to push the currently checked-out code to staging, just do:
 gitflow will automatically:
 
 * if the last tag was a test-MAJOR.MINOR.REVISION.BUILD will automatically increment BUILD
-* if the last tag was MAJOR.MINOR.REVISION.BUILD will ask you if you are bumping MAJOR, MINOR, or REVISION
+* if the last tag was vMAJOR.MINOR.REVISION.BUILD will ask you what the next tag should be
 * create a new tag
 * configure multistage to use that tag for the deploy
 * push the code and tags to the remote "origin"

@@ -25,26 +25,37 @@ module Capistrano
           end
 
           def last_staging_tag()
-            last_tag_matching('staging-*')
+            last_tag_matching('test-*')
           end
 
           def next_staging_tag
-            hwhen   = Date.today.to_s
-            who = `whoami`.chomp.to_url
-            what = Capistrano::CLI.ui.ask("What does this release introduce? (this will be normalized and used in the tag for this release) ").to_url
-
-            last_staging_tag = last_tag_matching("staging-#{hwhen}-*")
-            new_tag_serial = if last_staging_tag && last_staging_tag =~ /staging-[0-9]{4}-[0-9]{2}-[0-9]{2}\-([0-9]*)/
-                               $1.to_i + 1
+            new_tag_serial = if last_production_tag == next_production_tag
+                               Capistrano::CLI.ui.ask("What is the release after #{last_production_tag}? (must be in MAJOR.MINOR.REVISION.BUILD format) ")
                              else
-                               1
-                             end
+                               if last_staging_tag && last_staging_tag =~ /test-([0-9]+.[0-9]+.[0-9]+.)([0-9]+)/
+                                 $1 + ($2.to_i + 1).to_s
+                               else
+                                 release = Capistrano::CLI.ui.ask("What is the starting release? (must be in MAJOR.MINOR.REVISION.BUILD format) ")
+                                 unless release =~ /[0-9]+.[0-9]+.[0-9]+.[0-9]+/
+                                   abort "#{release} must be in MAJOR.MINOR.REVISION.BUILD format. example: 0.8.5.0"
+                                 end
+                                 release
+                               end
+            end
 
-            "#{stage}-#{hwhen}-#{new_tag_serial}-#{who}-#{what}"
+
+            "test-#{new_tag_serial}"
           end
 
           def last_production_tag()
-            last_tag_matching('production-*')
+            last_tag_matching('v*')
+          end
+
+          def next_production_tag
+            last_staging_tag = last_tag_matching("test-*")
+
+            last_staging_tag =~ /^test-(.*)$/
+            "v#{$1}"
           end
 
           def using_git?
@@ -142,28 +153,26 @@ Please make sure you have pulled and pushed all code before deploying:
             set :branch, new_staging_tag
           end
 
-          desc "Push the approved tag to production. Pass in tag to deploy with '-s tag=staging-YYYY-MM-DD-X-feature'."
+          desc "Push the last staging tag to production."
           task :tag_production do
-            promote_to_production_tag = capistrano_configuration[:tag] || last_staging_tag
+            promote_to_production_tag = last_staging_tag
 
-            unless promote_to_production_tag && promote_to_production_tag =~ /staging-.*/
-              abort "Couldn't find a staging tag to deploy; use '-s tag=staging-YYYY-MM-DD.X'"
+            unless promote_to_production_tag && promote_to_production_tag =~ /test-.*/
+              abort "Couldn't find a staging tag to deploy; use '-s tag=test-MAJOR.MINOR.REVISION.BUILD'"
             end
             unless last_tag_matching(promote_to_production_tag)
               abort "Staging tag #{promote_to_production_tag} does not exist."
             end
 
-            promote_to_production_tag =~ /^staging-(.*)$/
-              new_production_tag = "production-#{$1}"
-            puts "Preparing to promote staging tag #{promote_to_production_tag} to production as #{new_production_tag}'"
-            unless capistrano_configuration[:tag]
-              really_deploy = Capistrano::CLI.ui.ask("Do you really want to deploy #{new_production_tag}? [y/N]").to_url
-              unless really_deploy =~ /^[Yy]$/
-                exit(1)
-              end
+            promote_to_production_tag =~ /^test-(.*)$/
+            new_production_tag = "v#{$1}"
+
+            if new_production_tag == last_production_tag
+              puts "using current production tag '#{new_production_tag}'"
+            else
+              puts "promoting staging tag #{promote_to_production_tag} to production as '#{new_production_tag}'"
+              system "git tag -a -m 'tagging current code for deployment to production' #{new_production_tag} #{promote_to_production_tag}"
             end
-            puts "promoting staging tag #{promote_to_production_tag} to production as '#{new_production_tag}'"
-            system "git tag -a -m 'tagging current code for deployment to production' #{new_production_tag} #{promote_to_production_tag}"
 
             set :branch, new_production_tag
           end
