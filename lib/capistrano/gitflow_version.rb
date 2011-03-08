@@ -1,6 +1,6 @@
 require 'capistrano'
 require 'capistrano/ext/multistage'
-require 'capistrano-gitflow_version/natcmp'
+require 'capistrano/gitflow_version/natcmp'
 require 'stringex'
 
 module Capistrano
