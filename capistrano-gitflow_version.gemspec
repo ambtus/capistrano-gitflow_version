@@ -15,6 +15,7 @@ Gem::Specification.new do |s|
   s.rubyforge_project = "capistrano-gitflow_version"
 
   s.add_dependency('capistrano-ext', '>=1.2.1')
+  s.add_dependency('stringex')
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
