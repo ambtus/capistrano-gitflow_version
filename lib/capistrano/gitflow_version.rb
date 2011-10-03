@@ -128,7 +128,7 @@ Please make sure you have pulled and pushed all code before deploying:
                                          else
                                            'log'
                                          end
-                        "git #{log_subcommand} #{fromTag}..#{toTag}"
+                        "git #{log_subcommand} #{from_tag}..#{to_tag}"
                       end
             puts command
             system command
